@@ -30,4 +30,5 @@ jobs:
           export OSD1=`uuidgen`
           export OSD2=`uuidgen`
           export OSD3=`uuidgen`
+          mkdir /home/runner/ansible/
           molecule test --all
