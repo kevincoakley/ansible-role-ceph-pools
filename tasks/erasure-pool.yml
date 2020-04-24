@@ -1,0 +1,54 @@
+---
+- name: erasure pool related tasks
+  when: erasure_pool is defined
+  block:
+    - name: get a list of all pools
+      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool ls -f json"
+      changed_when: false
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      register: pool_list
+      until: pool_list is succeeded
+      run_once: true
+
+    - name: create the erasure pool
+      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool create {{ item.key }} {{ item.value.pg_num }} {{ item.value.pg_num }} erasure {{ item.value.erasure_code_profile }}"
+      with_dict: "{{ erasure_pool }}"
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      run_once: true
+      when: item.key not in (pool_list.stdout | from_json)
+
+    - name: get a list of all pool settings
+      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool get {{ item.key }} all -f json"
+      changed_when: false
+      with_dict: "{{ erasure_pool }}"
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      register: pool_settings
+      run_once: true
+
+    - name: set pool pg_num
+      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool set {{ (item['stdout'] | from_json).pool }} pg_num {{ erasure_pool[(item['stdout'] | from_json).pool].pg_num }}"
+      with_items: "{{ pool_settings.results }}"
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      run_once: true
+      when:
+        - erasure_pool[(item['stdout'] | from_json).pool] is defined
+        - erasure_pool[(item['stdout'] | from_json).pool].pg_num is defined
+        - (erasure_pool[(item['stdout'] | from_json).pool].pg_num | int) != ((item['stdout'] | from_json).pg_num | int)
+
+    - name: get a list of all pool applications
+      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool application get -f json"
+      changed_when: false
+      with_dict: "{{ erasure_pool }}"
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      register: pool_applications
+      run_once: true
+
+    - name: set the pool application
+      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool application enable {{ item.key }} {{ erasure_pool[item.key].application }}"
+      with_dict: "{{ (pool_applications.results[0]['stdout'] | from_json) }}"
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      run_once: true
+      when:
+        - erasure_pool[item.key] is defined
+        - erasure_pool[item.key].application is defined
+        - item.value[erasure_pool[item.key].application] is not defined

@@ -1,2 +1,17 @@
 ---
-# defaults file for ansible-role-ceph-pools
+cluster: ceph
+mon_group_name: mons
+# erasure_code_profile:
+#   ec-profile:
+#     k: 3
+#     m: 2
+#     crush_failure_domain: host
+# erasure_pool:
+#   erasure-pool:
+#     pg_num: 128
+#     erasure_code_profile: ec-profile
+#     application: rgw
+# replicated_pool:
+#   replicated_pool:
+#     pg_num: 128
+#     application: rgw

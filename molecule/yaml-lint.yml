@@ -1,0 +1,10 @@
+---
+extends: default
+rules:
+  braces: disable
+  line-length:
+    max: 256
+    level: warning
+  truthy:
+    ignore: |
+      molecule-test.yml

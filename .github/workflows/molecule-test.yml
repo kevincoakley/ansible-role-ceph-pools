@@ -1,0 +1,33 @@
+---
+name: Molecule Test
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ANSIBLE_CALLBACK_WHITELIST: profile_tasks
+      OS_AUTH_TYPE: v3applicationcredential
+      OS_AUTH_URL: ${{ secrets.OS_AUTH_URL }}
+      OS_IDENTITY_API_VERSION: 3
+      OS_REGION_NAME: SDSC
+      OS_INTERFACE: public
+      OS_APPLICATION_CREDENTIAL_ID: ${{ secrets.OS_APPLICATION_CREDENTIAL_ID }}
+      OS_APPLICATION_CREDENTIAL_SECRET: ${{ secrets.OS_APPLICATION_CREDENTIAL_SECRET }}
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v1
+      - name: Set up Python 3
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-lint flake8 molecule molecule-openstack docker
+      - name: Test with molecule
+        run: |
+          export MON=`uuidgen`
+          export OSD1=`uuidgen`
+          export OSD2=`uuidgen`
+          export OSD3=`uuidgen`
+          molecule test --all

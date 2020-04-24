@@ -1,2 +1,9 @@
 ---
-# tasks file for ansible-role-ceph-pools
+- name: include erasure-code-profile.yml
+  include_tasks: erasure-code-profile.yml
+
+- name: include erasure-pool.yml
+  include_tasks: erasure-pool.yml
+
+- name: include replicated-pool.yml
+  include_tasks: replicated-pool.yml

@@ -1,0 +1,59 @@
+---
+dependency:
+  name: gilt
+driver:
+  name: openstack
+lint: |
+  set -e
+  yamllint -c molecule/yaml-lint.yml .
+  ansible-lint
+  flake8
+platforms:
+  - name: "mon-${MON:-1}"
+    image: CentOS 7.6 x86_64
+    flavor: m1.medium
+    groups:
+      - mons
+      - mgrs
+  - name: "osd-${OSD1:-1}"
+    image: CentOS 7.6 x86_64
+    flavor: m1.medium
+    groups:
+      - osds
+  - name: "osd-${OSD2:-2}"
+    image: CentOS 7.6 x86_64
+    flavor: m1.medium
+    groups:
+      - osds
+  - name: "osd-${OSD3:-3}"
+    image: CentOS 7.6 x86_64
+    flavor: m1.medium
+    groups:
+      - osds
+provisioner:
+  name: ansible
+  log: false
+  env:
+    ANSIBLE_CONFIG: $MOLECULE_EPHEMERAL_DIRECTORY/ceph-ansible/ansible.cfg
+  inventory:
+    group_vars:
+      all:
+        configure_firewall: false
+        ntp_service_enabled: false
+        ceph_origin: repository
+        ceph_repository: community
+        ceph_stable_release: nautilus
+        monitor_interface: eth0
+        radosgw_interface: eth0
+        public_network: 192.168.0.0/24
+        cluster_network: 192.168.0.0/24
+        osd_objectstore: bluestore
+        dashboard_enabled: false
+        devices:
+          - /dev/sdb
+scenario:
+  name: default
+verifier:
+  name: testinfra
+  lint:
+    name: flake8
