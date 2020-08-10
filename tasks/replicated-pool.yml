@@ -3,7 +3,13 @@
   when: replicated_pool is defined
   block:
     - name: get a list of all pools
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool ls -f json"
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd pool ls
+        -f json
       changed_when: false
       delegate_to: "{{ groups[mon_group_name][0] }}"
       register: pool_list
@@ -11,14 +17,27 @@
       run_once: true
 
     - name: create the replicated pool
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool create {{ item.key }} {{ item.value.pg_num | default('8') }}"
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd pool create
+        {{ item.key }}
+        {{ item.value.pg_num | default('8') }}
       with_dict: "{{ replicated_pool }}"
       delegate_to: "{{ groups[mon_group_name][0] }}"
       run_once: true
       when: item.key not in (pool_list.stdout | from_json)
 
     - name: get a list of all pool settings
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool get {{ item.key }} all -f json"
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd pool get {{ item.key }} all
+        -f json
       changed_when: false
       with_dict: "{{ replicated_pool }}"
       delegate_to: "{{ groups[mon_group_name][0] }}"
@@ -26,7 +45,13 @@
       run_once: true
 
     - name: set pool pg_num
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool set {{ (item['stdout'] | from_json).pool }} pg_num {{ replicated_pool[(item['stdout'] | from_json).pool].pg_num }}"
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd pool set {{ (item['stdout'] | from_json).pool }}
+        pg_num {{ replicated_pool[(item['stdout'] | from_json).pool].pg_num }}
       with_items: "{{ pool_settings.results }}"
       delegate_to: "{{ groups[mon_group_name][0] }}"
       run_once: true
@@ -36,7 +61,13 @@
         - (replicated_pool[(item['stdout'] | from_json).pool].pg_num | int) != ((item['stdout'] | from_json).pg_num | int)
 
     - name: set pool size
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool set {{ (item['stdout'] | from_json).pool }} size {{ replicated_pool[(item['stdout'] | from_json).pool].size }}"
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd pool set {{ (item['stdout'] | from_json).pool }}
+        size {{ replicated_pool[(item['stdout'] | from_json).pool].size }}
       with_items: "{{ pool_settings.results }}"
       delegate_to: "{{ groups[mon_group_name][0] }}"
       run_once: true
@@ -46,7 +77,13 @@
         - (replicated_pool[(item['stdout'] | from_json).pool].size | int) != ((item['stdout'] | from_json).size | int)
 
     - name: get a list of all pool applications
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool application get -f json"
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd pool application get
+        -f json
       changed_when: false
       with_dict: "{{ replicated_pool }}"
       delegate_to: "{{ groups[mon_group_name][0] }}"
@@ -54,7 +91,14 @@
       run_once: true
 
     - name: set the pool application
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool application enable {{ item.key }} {{ replicated_pool[item.key].application }}"
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd pool application enable
+        {{ item.key }}
+        {{ replicated_pool[item.key].application }}
       with_dict: "{{ (pool_applications.results[0]['stdout'] | from_json) }}"
       delegate_to: "{{ groups[mon_group_name][0] }}"
       run_once: true

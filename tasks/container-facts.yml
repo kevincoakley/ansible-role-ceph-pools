@@ -1,0 +1,10 @@
+---
+- name: set_fact container_binary
+  set_fact:
+    container_binary: "{{ 'podman' if (ansible_os_family == 'RedHat' and ansible_distribution_major_version == '8') else 'docker' }}"
+  when: containerized_deployment | default(false) | bool
+
+- name: set_fact container_exec_cmd
+  set_fact:
+    container_exec_cmd: "{{ container_binary }} exec ceph-mon-{{ hostvars[groups[mon_group_name][0]]['ansible_hostname'] }}"
+  when: containerized_deployment | default(false) | bool
