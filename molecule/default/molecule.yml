@@ -10,23 +10,23 @@ lint: |
   flake8
 platforms:
   - name: "mon-${MON:-1}"
-    image: CentOS 7.6 x86_64
+    image: CentOS 7.8 x86_64
     flavor: m1.medium
     groups:
       - mons
       - mgrs
   - name: "osd-${OSD1:-1}"
-    image: CentOS 7.6 x86_64
+    image: CentOS 7.8 x86_64
     flavor: m1.medium
     groups:
       - osds
   - name: "osd-${OSD2:-2}"
-    image: CentOS 7.6 x86_64
+    image: CentOS 7.8 x86_64
     flavor: m1.medium
     groups:
       - osds
   - name: "osd-${OSD3:-3}"
-    image: CentOS 7.6 x86_64
+    image: CentOS 7.8 x86_64
     flavor: m1.medium
     groups:
       - osds
