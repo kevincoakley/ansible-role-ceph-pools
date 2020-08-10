@@ -3,7 +3,13 @@
   when: erasure_code_profile is defined
   block:
     - name: get a list of all erasure-code profiles
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd erasure-code-profile ls -f json"
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd erasure-code-profile ls
+        -f json
       changed_when: false
       delegate_to: "{{ groups[mon_group_name][0] }}"
       register: result
@@ -11,7 +17,16 @@
       run_once: true
 
     - name: create erasure-code profiles
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd erasure-code-profile set {{ item.key }} k={{ item.value.k }} m={{ item.value.m }} crush-failure-domain={{ item.value.crush_failure_domain | default('host') }}"
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd erasure-code-profile
+        set {{ item.key }}
+        k={{ item.value.k }}
+        m={{ item.value.m }}
+        crush-failure-domain={{ item.value.crush_failure_domain | default('host') }}
       with_dict: "{{ erasure_code_profile }}"
       delegate_to: "{{ groups[mon_group_name][0] }}"
       run_once: true
