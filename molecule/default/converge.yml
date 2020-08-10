@@ -27,7 +27,12 @@
       pause: seconds=5
 
     - name: Verify erasure_pool & replicated_pool was created
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} osd pool ls -f json"
+      command: >-
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd pool ls
+        -f json
       changed_when: false
       delegate_to: "{{ groups[mon_group_name][0] }}"
       register: pool_list
@@ -36,7 +41,11 @@
       failed_when: "'erasure_pool' not in (pool_list.stdout | from_json) or 'replicated_pool' not in (pool_list.stdout | from_json)"
 
     - name: Check ceph health
-      command: "ceph --connect-timeout 5 --cluster {{ cluster }} health"
+      command: >-
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        health
       changed_when: false
       delegate_to: "{{ groups[mon_group_name][0] }}"
       register: ceph_health
