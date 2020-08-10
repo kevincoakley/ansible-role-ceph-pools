@@ -50,7 +50,7 @@ provisioner:
         osd_objectstore: bluestore
         dashboard_enabled: false
         devices:
-          - /dev/sdb
+          - /dev/vdb
 scenario:
   name: default
 verifier:
