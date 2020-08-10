@@ -1,4 +1,7 @@
 ---
+- name: include container-facts.yml
+  include_tasks: container-facts.yml
+
 - name: include erasure-code-profile.yml
   include_tasks: erasure-code-profile.yml
 
