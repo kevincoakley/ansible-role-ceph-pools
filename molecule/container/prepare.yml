@@ -1,0 +1,39 @@
+---
+- name: include the ceph-ansible playbook
+  import_playbook: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ceph-ansible/site-container.yml.sample"
+
+- name: Converge
+  hosts: all
+  become: true
+
+  vars:
+    cluster: ceph
+    mon_group_name: mons
+
+  post_tasks:
+    - name: Give Ceph time to work
+      pause: seconds=5
+
+    - name: set_fact container_binary
+      set_fact:
+        container_binary: "{{ 'podman' if (ansible_os_family == 'RedHat' and ansible_distribution_major_version == '8') else 'docker' }}"
+      when: containerized_deployment | default(false) | bool
+
+    - name: set_fact container_exec_cmd
+      set_fact:
+        container_exec_cmd: "{{ container_binary }} exec ceph-mon-{{ hostvars[groups[mon_group_name][0]]['ansible_hostname'] }}"
+      when: containerized_deployment | default(false) | bool
+
+    - name: Check ceph health
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        health
+      changed_when: false
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      register: ceph_health
+      until: ceph_health is succeeded
+      run_once: true
+      failed_when: "'HEALTH_OK' not in ceph_health.stdout"

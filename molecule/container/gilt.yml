@@ -1,0 +1,4 @@
+---
+- git: https://github.com/ceph/ceph-ansible.git
+  version: v4.0.26
+  dst: $MOLECULE_EPHEMERAL_DIRECTORY/ceph-ansible/
