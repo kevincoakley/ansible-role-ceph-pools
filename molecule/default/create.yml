@@ -5,9 +5,7 @@
   gather_facts: false
   no_log: "{{ molecule_no_log }}"
   vars:
-    ssh_user: centos
     ssh_port: 22
-    network_name: kcoakley_network
 
     security_group_name: molecule
     security_group_description: "Security group for testing Molecule"
@@ -23,9 +21,8 @@
       - ethertype: IPv6
         group: "{{ security_group.id }}"
 
-    keypair_name: "keypair-{{ molecule_yml['platforms'][0]['name'] }}"
-    keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
-
+    key_pair_name: "key-pair-{{ molecule_yml['platforms'][0]['name'] }}"
+    key_pair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
   tasks:
     - name: Create security group
       os_security_group:
@@ -42,30 +39,30 @@
         remote_ip_prefix: "{{ item.cidr | default(omit) }}"
         remote_group: "{{ item.group | default(omit) }}"
         ethertype: "{{ item.ethertype | default(omit) }}"
-      with_items: "{{ security_group_rules }}"
+      loop: "{{ security_group_rules | flatten(levels=1) }}"
 
-    - name: Test for presence of local keypair
+    - name: Test for presence of local key pair
       stat:
-        path: "{{ keypair_path }}"
-      register: keypair_local
+        path: "{{ key_pair_path }}"
+      register: key_pair_local
 
-    - name: Delete remote keypair
+    - name: Delete remote key pair
       os_keypair:
-        name: "{{ keypair_name }}"
+        name: "{{ key_pair_name }}"
         state: absent
-      when: not keypair_local.stat.exists
+      when: not key_pair_local.stat.exists
 
-    - name: Create keypair
+    - name: Create key pair
       os_keypair:
-        name: "{{ keypair_name }}"
-      register: keypair
+        name: "{{ key_pair_name }}"
+      register: key_pair
 
-    - name: Persist the keypair
+    - name: Persist the key pair
       copy:
-        dest: "{{ keypair_path }}"
-        content: "{{ keypair.key.private_key }}"
+        dest: "{{ key_pair_path }}"
+        content: "{{ key_pair.key.private_key }}"
         mode: 0600
-      when: keypair.changed
+      when: key_pair.changed
 
     - name: Create OSD volumes
       os_volume:
@@ -81,11 +78,13 @@
         image: "{{ item.image }}"
         flavor: "{{ item.flavor }}"
         security_groups: "{{ security_group_name }}"
-        key_name: "{{ keypair_name }}"
-        nics:
-          - net-name: "{{ network_name }}"
+        key_name: "{{ key_pair_name }}"
+        network: "{{ item.network }}"
+        floating_ip_pools: "{{ item.fip_pool | default(omit) }}"
+        meta:
+          ssh_user: "{{ item.ssh_user }}"
       register: server
-      with_items: "{{ molecule_yml.platforms }}"
+      loop: "{{ molecule_yml.platforms | flatten(levels=1) }}"
       async: 7200
       poll: 0
 
@@ -95,7 +94,7 @@
       register: os_jobs
       until: os_jobs.finished
       retries: 300
-      with_items: "{{ server.results }}"
+      loop: "{{ server.results | flatten(levels=1) }}"
 
     - name: Attach OSD volumes to hosts
       os_server_volume:
@@ -111,11 +110,12 @@
       set_fact:
         instance_conf_dict: {
           'instance': "{{ item.openstack.name }}",
+          'instance_id': "{{ item.openstack.id }}",
           'address': "{{ item.openstack.accessIPv4 }}",
-          'user': "{{ ssh_user }}",
+          'user': "{{ item.openstack.metadata.ssh_user }}",
           'port': "{{ ssh_port }}",
-          'identity_file': "{{ keypair_path }}", }
-      with_items: "{{ os_jobs.results }}"
+          'identity_file': "{{ key_pair_path }}", }
+      loop: "{{ os_jobs.results | flatten(levels=1) }}"
       register: instance_config_dict
       when: server.changed | bool
 
@@ -126,7 +126,7 @@
 
     - name: Dump instance config
       copy:
-        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        content: "{{ instance_conf | to_json | from_json | to_yaml }}"
         dest: "{{ molecule_instance_config }}"
       when: server.changed | bool
 
@@ -136,4 +136,4 @@
         host: "{{ item.address }}"
         search_regex: SSH
         delay: 10
-      with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
+      loop: "{{ lookup('file', molecule_instance_config) | from_yaml | flatten(levels=1) }}"

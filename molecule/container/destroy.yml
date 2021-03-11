@@ -5,13 +5,14 @@
   gather_facts: false
   no_log: "{{ molecule_no_log }}"
   tasks:
+    # molecule_instance_config might not be present, therefore ignore errors and default to an empty config
     - name: Destroy molecule instance(s)
       os_server:
-        name: "{{ item.name }}"
+        name: "{{ item.instance_id }}"
         state: absent
         delete_fip: true
       register: server
-      with_items: "{{ molecule_yml.platforms }}"
+      loop: "{{ lookup('file', molecule_instance_config, errors='ignore') | default([], true) | from_yaml | flatten(levels=1) }}"
       async: 7200
       poll: 0
 
@@ -21,7 +22,7 @@
       register: os_jobs
       until: os_jobs.finished
       retries: 300
-      with_items: "{{ server.results }}"
+      loop: "{{ server.results | flatten(levels=1) }}"
 
     - name: Delete OSD volumes
       os_volume:
@@ -39,6 +40,6 @@
 
     - name: Dump instance config
       copy:
-        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        content: "{{ instance_conf | to_json | from_json | to_yaml }}"
         dest: "{{ molecule_instance_config }}"
       when: server.changed | bool
