@@ -10,7 +10,7 @@
     cluster: ceph
     mon_group_name: mons
 
-  post_tasks:
+  tasks:
     - name: Give Ceph time to work
       pause: seconds=5
 
