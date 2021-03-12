@@ -1,7 +1,7 @@
 ---
 dependency:
   name: shell
-  command: git clone --depth 1 --branch v4.0.26 https://github.com/ceph/ceph-ansible.git $MOLECULE_EPHEMERAL_DIRECTORY/ceph-ansible/
+  command: rm -rf $MOLECULE_EPHEMERAL_DIRECTORY/ceph-ansible/; git clone --depth 1 --branch v4.0.48 https://github.com/ceph/ceph-ansible.git $MOLECULE_EPHEMERAL_DIRECTORY/ceph-ansible/
 driver:
   name: openstack
 lint: |
