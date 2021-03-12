@@ -50,6 +50,7 @@ provisioner:
     group_vars:
       all:
         containerized_deployment: true
+        ceph_docker_image_tag: v4.0.18-stable-4.0-nautilus-centos-7
         configure_firewall: false
         ntp_service_enabled: false
         monitor_interface: eth0
