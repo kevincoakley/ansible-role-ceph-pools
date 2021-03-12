@@ -13,10 +13,12 @@
       erasure_pool:
         pg_num: 64
         erasure_code_profile: ec-profile
+        pg_autoscale_mode: "off"
         application: rgw
     replicated_pool:
       replicated_pool:
         pg_num: 64
+        pg_autoscale_mode: "on"
         application: rgw
 
   roles:

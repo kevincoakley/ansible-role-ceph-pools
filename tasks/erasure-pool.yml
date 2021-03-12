@@ -63,6 +63,22 @@
         - erasure_pool[(item['stdout'] | from_json).pool].pg_num is defined
         - (erasure_pool[(item['stdout'] | from_json).pool].pg_num | int) != ((item['stdout'] | from_json).pg_num | int)
 
+    - name: set pool pg_autoscale_mode
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd pool set {{ (item['stdout'] | from_json).pool }}
+        pg_autoscale_mode {{ erasure_pool[(item['stdout'] | from_json).pool].pg_autoscale_mode }}
+      with_items: "{{ pool_settings.results }}"
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      run_once: true
+      when:
+        - erasure_pool[(item['stdout'] | from_json).pool] is defined
+        - erasure_pool[(item['stdout'] | from_json).pool].pg_autoscale_mode is defined
+        - (erasure_pool[(item['stdout'] | from_json).pool].pg_autoscale_mode | string) != ((item['stdout'] | from_json).pg_autoscale_mode | string)
+
     - name: get a list of all pool applications
       command: >-
         {{ container_exec_cmd | default('') }}
