@@ -1,30 +1,16 @@
 ---
-- name: Converge
+- name: Verify
   hosts: all
   become: true
 
-  vars:
-    erasure_code_profile:
-      ec-profile:
-        k: 2
-        m: 1
-        crush_failure_domain: host
-    erasure_pool:
-      erasure_pool:
-        pg_num: 64
-        erasure_code_profile: ec-profile
-        application: rgw
-    replicated_pool:
-      replicated_pool:
-        pg_num: 64
-        application: rgw
+  tasks:
+    - name: set cluster
+      set_fact:
+        cluster: ceph
 
-  roles:
-    - role: ansible-role-ceph-pools
-
-  post_tasks:
-    - name: Give Ceph time to work
-      pause: seconds=5
+    - name: set mon_group_name
+      set_fact:
+        mon_group_name: mons
 
     - name: set_fact container_binary
       set_fact:

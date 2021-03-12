@@ -76,6 +76,22 @@
         - replicated_pool[(item['stdout'] | from_json).pool].size is defined
         - (replicated_pool[(item['stdout'] | from_json).pool].size | int) != ((item['stdout'] | from_json).size | int)
 
+    - name: set pool pg_autoscale_mode
+      command: >-
+        {{ container_exec_cmd | default('') }}
+        ceph
+        --connect-timeout 5
+        --cluster {{ cluster }}
+        osd pool set {{ (item['stdout'] | from_json).pool }}
+        pg_autoscale_mode {{ replicated_pool[(item['stdout'] | from_json).pool].pg_autoscale_mode }}
+      with_items: "{{ pool_settings.results }}"
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      run_once: true
+      when:
+        - replicated_pool[(item['stdout'] | from_json).pool] is defined
+        - replicated_pool[(item['stdout'] | from_json).pool].pg_autoscale_mode is defined
+        - (replicated_pool[(item['stdout'] | from_json).pool].pg_autoscale_mode | string) != ((item['stdout'] | from_json).pg_autoscale_mode | string)
+
     - name: get a list of all pool applications
       command: >-
         {{ container_exec_cmd | default('') }}

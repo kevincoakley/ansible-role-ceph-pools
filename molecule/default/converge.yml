@@ -13,42 +13,13 @@
       erasure_pool:
         pg_num: 64
         erasure_code_profile: ec-profile
+        pg_autoscale_mode: "off"
         application: rgw
     replicated_pool:
       replicated_pool:
         pg_num: 64
+        pg_autoscale_mode: "on"
         application: rgw
 
   roles:
     - role: ansible-role-ceph-pools
-
-  post_tasks:
-    - name: Give Ceph time to work
-      pause: seconds=5
-
-    - name: Verify erasure_pool & replicated_pool was created
-      command: >-
-        ceph
-        --connect-timeout 5
-        --cluster {{ cluster }}
-        osd pool ls
-        -f json
-      changed_when: false
-      delegate_to: "{{ groups[mon_group_name][0] }}"
-      register: pool_list
-      until: pool_list is succeeded
-      run_once: true
-      failed_when: "'erasure_pool' not in (pool_list.stdout | from_json) or 'replicated_pool' not in (pool_list.stdout | from_json)"
-
-    - name: Check ceph health
-      command: >-
-        ceph
-        --connect-timeout 5
-        --cluster {{ cluster }}
-        health
-      changed_when: false
-      delegate_to: "{{ groups[mon_group_name][0] }}"
-      register: ceph_health
-      until: ceph_health is succeeded
-      run_once: true
-      failed_when: "'HEALTH_OK' not in ceph_health.stdout"

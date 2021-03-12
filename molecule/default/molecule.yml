@@ -1,48 +1,58 @@
 ---
 dependency:
-  name: gilt
+  name: shell
+  command: rm -rf $MOLECULE_EPHEMERAL_DIRECTORY/ceph-ansible/; git clone --depth 1 --branch v4.0.48 https://github.com/ceph/ceph-ansible.git $MOLECULE_EPHEMERAL_DIRECTORY/ceph-ansible/
 driver:
   name: openstack
 lint: |
   set -e
   yamllint -c molecule/yaml-lint.yml .
-  ansible-lint
+  ansible-lint -c molecule/ansible-lint.yml .
   flake8
 platforms:
   - name: "mon-${MON:-1}"
-    image: CentOS 7.8 x86_64
+    image: CentOS 7.9 x86_64
+    ssh_user: centos
     flavor: m1.medium
+    network: kcoakley_network
     groups:
       - mons
       - mgrs
   - name: "osd-${OSD1:-1}"
-    image: CentOS 7.8 x86_64
+    image: CentOS 7.9 x86_64
+    ssh_user: centos
     flavor: m1.medium
+    network: kcoakley_network
     groups:
       - osds
   - name: "osd-${OSD2:-2}"
-    image: CentOS 7.8 x86_64
+    image: CentOS 7.9 x86_64
+    ssh_user: centos
     flavor: m1.medium
+    network: kcoakley_network
     groups:
       - osds
   - name: "osd-${OSD3:-3}"
-    image: CentOS 7.8 x86_64
+    image: CentOS 7.9 x86_64
+    ssh_user: centos
     flavor: m1.medium
+    network: kcoakley_network
     groups:
       - osds
 provisioner:
   name: ansible
-  log: false
+  log: true
+  options:
+    vvv: false
   env:
     ANSIBLE_CONFIG: $MOLECULE_EPHEMERAL_DIRECTORY/ceph-ansible/ansible.cfg
   inventory:
     group_vars:
       all:
+        containerized_deployment: true
+        ceph_docker_image_tag: v4.0.18-stable-4.0-nautilus-centos-7
         configure_firewall: false
         ntp_service_enabled: false
-        ceph_origin: repository
-        ceph_repository: community
-        ceph_stable_release: nautilus
         monitor_interface: eth0
         radosgw_interface: eth0
         public_network: 192.168.0.0/24
@@ -54,6 +64,4 @@ provisioner:
 scenario:
   name: default
 verifier:
-  name: testinfra
-  lint:
-    name: flake8
+  name: ansible

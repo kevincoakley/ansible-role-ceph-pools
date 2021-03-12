@@ -1,6 +1,7 @@
 ---
 galaxy_info:
-  role_name: ceph-pools
+  role_name: ceph_pools
+  namespace: kevincoakley
   author: Kevin Coakley
   description: Manage Ceph EC and Replicated Pools
   license: BSD
@@ -28,6 +29,7 @@ galaxy_info:
     - name: Ubuntu
       versions:
         - bionic
+        - focal
 
   galaxy_tags:
     - ceph
