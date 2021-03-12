@@ -49,11 +49,9 @@ provisioner:
   inventory:
     group_vars:
       all:
+        containerized_deployment: true
         configure_firewall: false
         ntp_service_enabled: false
-        ceph_origin: repository
-        ceph_repository: community
-        ceph_stable_release: nautilus
         monitor_interface: eth0
         radosgw_interface: eth0
         public_network: 192.168.0.0/24
